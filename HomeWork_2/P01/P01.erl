@@ -14,8 +14,8 @@ last([H|T]) ->
 last([]) -> false.
 
 lastEx(_,[H|T]) ->
-    %%erlang:display(H_),
-    %%erlang:display(T_),
+    %%erlang:display(H),
+    %%erlang:display(T),
     lastEx(H, T);
 lastEx(H,[]) ->
     %%erlang:display("Finish"),
