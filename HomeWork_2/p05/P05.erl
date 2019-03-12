@@ -6,17 +6,8 @@
 -module(p05).
 -export([reverse/1]).
 
-reverse([H|T]) ->
-    %%erlang:display("Start"),
-    %%erlang:display(H),
-    %%erlang:display(T),
-    reverseEx(T, [H]);
-reverse([]) -> [].
+reverse(L) -> reverse(L,[]).
 
-reverseEx([H|T], R) ->
-    %%erlang:display(H),
-    %%erlang:display(T),
-    reverseEx(T, [H|R]);
-reverseEx([], R) ->
-    %%erlang:display("Finish"),
-    R.
+reverse([H|T],Acc) -> 
+   reverse(T,[H|Acc]);
+reverse([],T) -> T.
