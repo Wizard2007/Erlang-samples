@@ -8,9 +8,3 @@
 
 duplicate([H])-> [H,H];
 duplicate([H|T])-> [H,H|duplicate(T)].
-
-reverse(L) -> reverse(L,[]).
-
-reverse([H|T],Acc) -> 
-   reverse(T,[H|Acc]);
-reverse([],T) -> T.
