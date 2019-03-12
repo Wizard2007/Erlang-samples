@@ -14,15 +14,8 @@ decode_modified([H|T], Acc) -> decode_modified(T, decode_modified(H, 1, Acc));
 decode_modified([], Acc) -> reverse(Acc).
 
 decode_modified(H, 1, Acc)-> 
-    erlang:display(H),
-    erlang:display(Acc),
-    erlang:display("--- 1 ---"),
     [H|Acc];
 decode_modified(H, I, Acc)-> 
-    erlang:display(H),
-    erlang:display(I),
-    erlang:display(Acc),    
-    erlang:display("--- I ---"),
     decode_modified(H, I - 1, [H|Acc]).
 
 reverse(L) -> reverse(L,[]).
