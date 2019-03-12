@@ -9,11 +9,8 @@
 encode(L) -> encode(L, 0).
 
 encode([H,H|T], C) ->
-    erlang:display(C),
     encode([H|T], C + 1);
 encode([], _) -> 
     [];
 encode([H|T], C) -> 
-    erlang:display(C),
-    erlang:display("--- add ---"),
     [{C + 1, H} | encode(T,0)].
