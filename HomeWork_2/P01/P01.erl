@@ -1,22 +1,10 @@
-%% P01 (*) ÐÐ°Ð¹Ñ‚Ð¸ Ð¿Ð¾ÑÐ»ÐµÐ´Ð½Ð¸Ð¹ ÑÐ»ÐµÐ¼ÐµÐ½Ñ‚ ÑÐ¿Ð¸ÑÐºÐ°:
-%% ÐŸÑ€Ð¸Ð¼ÐµÑ€:
+%% P01 (*) Íàéòè ïîñëåäíèé ýëåìåíò ñïèñêà:
+%% Ïðèìåð:
 %% 1> p01:last([a,b,c,d,e,f]).
 %% f
 
 -module(p01).
 -export([last/1]).
 
-last([H|T]) ->
-    %%erlang:display("Start"),
-    %%erlang:display(H),
-    %%erlang:display(T),
-    lastEx(H,T);
-last([]) -> false.
-
-lastEx(_,[H|T]) ->
-    %%erlang:display(H),
-    %%erlang:display(T),
-    lastEx(H, T);
-lastEx(H,[]) ->
-    %%erlang:display("Finish"),
-    H.
+last([H]) -> H;
+last([_|T]) -> last(T).
