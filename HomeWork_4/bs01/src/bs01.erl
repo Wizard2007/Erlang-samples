@@ -1,10 +1,10 @@
-%% https://www.tutorialspoint.com/erlang/erlang_binary_part.htm
-%% BS01: Èçâëå÷ü èç ñòðîêè ïåðâîå ñëîâî:
-%% Ïðèìåð:
+%% coding: latin-1
+%% BS01: ??????? ?? ?????? ?????? ?????:
+%% ??????:
 %% 1> BinText = <<"Some text">>.
-%% <<”Some Text”>>
+%% <<"Some Text">>
 %% 2> bs01:first_word(BinText).
-%% <<”Some”>>
+%% <<"Some">>
 
 -module(bs01).
 
@@ -23,3 +23,15 @@ search(<<_, Rest/binary>>, C) -> search(Rest, C + 1).
 %%====================================================================
 %% Internal functions
 %%====================================================================
+
+%%====================================================================
+%% Unit tests
+%%====================================================================
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+    first_word_test_()->[
+        ?_assert(first_word(<<"   Some text">>)=:=<<"Some">>),
+        ?_assert(first_word(<<"Some text">>)=:=<<"Some">>),
+        ?_assert(first_word(<<"Some">>)=:=<<"Some">>)].
+-endif.

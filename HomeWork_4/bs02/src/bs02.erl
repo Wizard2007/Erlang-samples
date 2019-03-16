@@ -1,9 +1,10 @@
-%% BS02: Ðàçäåëèòü ñòðîêó íà ñëîâà:
-%% Ïðèìåð:
-%% 1> BinText = <<”Text with four words”>>.
-%% <<”Text with four words”>>
+%% coding: latin-1
+%% BS02: ????????? ?????? ?? ?????:
+%% ??????:
+%% 1> BinText = <<"Text with four words">>.
+%% <<"Text with four words">>
 %% 2> bs02:words(BinText).
-%% [<<”Text”>>, <<”with”>>, <<”four”>>, <<”words”>>]
+%% [<<"Text">>, <<"with">>, <<"four">>, <<"words">>]
 
 
 -module(bs02).
@@ -24,3 +25,12 @@ words(<<_,Rest/binary>>, Bin, C) -> words(Rest, Bin, C+1).
 %%====================================================================
 %% Internal functions
 %%====================================================================
+
+%%====================================================================
+%% Unit tests
+%%====================================================================
+
+-ifdef(TEST).
+-include_lib("eunit/include/eunit.hrl").
+    words_test_()->[?_assert(words(<<"Text with four words">>)=:=[<<"Text">>, <<"with">>, <<"four">>, <<"words">>])].
+-endif.
