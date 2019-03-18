@@ -17,20 +17,20 @@
 
 split(Bin, Divider) ->
 	DividerBin = list_to_binary(Divider),
-	DividerSize = byte_size(DividerBin)*8,
-	<<DividerInt:DividerSize>> = DividerBin,
-	split(Bin,Bin, 0, DividerInt, DividerSize).
+	DividerSize = byte_size(DividerBin),
+	split(Bin,Bin, 0, DividerBin, DividerSize).
 
-split(Rest, Bin, C, DividerInt, DividerSize) ->
-    <<DividerIntLocal:DividerSize,T/binary>> = Rest,
-	if(DividerIntLocal == DividerInt) ->
-		[ binary_part(Bin,{0,C})|split(T,T, 0, DividerInt, DividerSize)];
+split(Rest, Bin, C, DividerBin, DividerSize) ->
+    <<DividerBinLocal:DividerSize/binary,T/binary>> = Rest,
+	if(DividerBinLocal == DividerBin) ->
+        <<W:C/binary, _/binary>> = Bin,       
+		[W|split(T,T, 0, DividerBin, DividerSize)];
 	true ->
-		<<_:8,TRet/binary>> = Rest,
+		<<_:1/binary,TRest/binary>> = Rest,
 		if byte_size(Bin) - 1 > 3 ->
-			split(TRet,Bin, C+1, DividerInt, DividerSize);
+			split(TRest,Bin, C+1, DividerBin, DividerSize);
 		true ->
-			[ binary_part(Bin,{0,byte_size(Bin) })]
+            [Bin]			
 		end
 
     end.
