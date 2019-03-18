@@ -15,10 +15,14 @@
 %% API functions
 %%====================================================================
 
-first_word(Bin) ->  binary_part(Bin,{0,search(Bin,0)}).
+first_word(<<" ", Bin/binary>>) -> first_word(Bin); 
 
-search(<<" ", _/binary>>, C) ->  C;
-search(<<_, Rest/binary>>, C) -> search(Rest, C + 1).
+first_word(Bin) ->
+    case binary:match(Bin, <<" ">>) of
+        {Pos, _} -> <<W:Pos/binary, _/binary>> = Bin, 
+                    W;
+        nomatch -> Bin
+    end.
 
 %%====================================================================
 %% Internal functions
