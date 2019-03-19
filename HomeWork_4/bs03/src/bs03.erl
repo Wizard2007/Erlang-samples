@@ -21,8 +21,6 @@ split(Bin, Divider) ->
 	split(Bin,Bin, 0, DividerBin, DividerSize).
 
 split(Rest, Bin, C, DividerBin, DividerSize) ->
-    %%<<DividerBinLocal:DividerSize/binary,T/binary>> = Rest,
-    erlang:display(Rest),
     case Rest of
         <<DividerBin:DividerSize/binary,T/binary>> ->            
             erlang:display("case 1"),
@@ -30,27 +28,12 @@ split(Rest, Bin, C, DividerBin, DividerSize) ->
             erlang:display(W),
             erlang:display(T),
             [W|split(T,T, 0, DividerBin, DividerSize)];
-        <<_:DividerSize/binary>> -> erlang:display("case 3"),
+        <<_:DividerSize/binary>> -> 
             [Bin];
-        _ -> erlang:display("case 2"),
+        _ -> 
             <<_:1/binary,TRest/binary>> = Rest,
-            erlang:display(TRest),
-            erlang:display(C + 1),
             split(TRest,Bin, C+1, DividerBin, DividerSize)
     end.
-    
-%%    if(DividerBinLocal == DividerBin) ->
-%%        <<W:C/binary, _/binary>> = Bin,       
-%%        [W|split(T,T, 0, DividerBin, DividerSize)];
-%%	  true ->
-%%		<<_:1/binary,TRest/binary>> = Rest,
-%%		if byte_size(Bin) - 1 > 3 ->
-%%			split(TRest,Bin, C+1, DividerBin, DividerSize);
-%%		true ->
-%%          [Bin]			
-%%		end
-
-%%    end.
 
 %%====================================================================
 %% Internal functions
