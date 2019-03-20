@@ -7,7 +7,7 @@
 -module(my_cache).
 
 %% API exports
--export([create/0,insert_/3, lookup/1]).
+-export([create/0,insert/3, lookup/1]).
 
 -record(my_cache_item,{value, expired_at}).
 
@@ -19,13 +19,9 @@ create() ->
     ets:new(my_cache, [public,named_table]),
     ok.
 
-insert_(Key, Value, TimeOut) ->
-    erlang:display("info"),
-    
+insert(Key, Value, TimeOut) ->
     NowInSeconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()) + TimeOut,
     Item = #my_cache_item{value = Value, expired_at = calendar:gregorian_seconds_to_datetime(NowInSeconds)},
-    erlang:display(Item),
-    erlang:display("insert"),
     ets:insert(my_cache, {Key, Item}),
     ok.
 
