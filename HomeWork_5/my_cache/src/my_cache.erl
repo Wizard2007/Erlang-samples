@@ -61,6 +61,7 @@ lookup(Key) ->
     words_test_()->[?_assert(create() =:= ok),
                     ?_assert(ets:info(my_cache) /= undefined),
                     ?_assert(insert(key1,1,600) =:= ok),
-                    ?_assert(lookup(key2) =:= {ok, []})
+                    ?_assert(lookup(key2) =:= {ok, []}),
+                    ?_assert(lookup(key1) =:= {ok, #my_cache_item{value = 1, expired_at = calendar:gregorian_seconds_to_datetime(calendar:datetime_to_gregorian_seconds(calendar:universal_time()) + 600)}})
                    ].
 -endif.
