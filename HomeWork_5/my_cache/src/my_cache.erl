@@ -7,7 +7,7 @@
 -module(my_cache).
 
 %% API exports
--export([create/0,insert/3, lookup/1]).
+-export([create/0,insert/3, lookup/1, delete_obsolete/0]).
 
 -record(my_cache_item,{value, expired_at}).
 
@@ -20,15 +20,23 @@ create() ->
     ok.
 
 insert(Key, Value, TimeOut) ->
-    NowInSeconds = calendar:datetime_to_gregorian_seconds(calendar:local_time()) + TimeOut,
+    NowInSeconds = calendar:datetime_to_gregorian_seconds(calendar:universal_time()) + TimeOut,
     Item = #my_cache_item{value = Value, expired_at = calendar:gregorian_seconds_to_datetime(NowInSeconds)},
     ets:insert(my_cache, {Key, Item}),
     ok.
 
 lookup(Key) ->
-    [{_, Value}] = ets:lookup(my_cache, Key),
-    {ok, Value}.
-
+    [{_, Item}] = ets:lookup(my_cache, Key),
+    CurrentTime = calendar:universal_time(),
+    if 
+        Item#my_cache_item.expired_at >= CurrentTime  -> 
+            {ok, Item};
+        true ->
+            {ok, undefin
+    end.
+    
+delete_obsolete() -> ets:match_delete(my_cache, ets:fun2ms(fun({Value, ExpiredAt}) when ExpiredAt =< calendar:universal_time() -> B end)).
+    ok.       
 %%====================================================================
 %% Internal functions
 %%====================================================================
