@@ -6,6 +6,10 @@
 -include_lib("stdlib/include/ms_transform.hrl").
 -module(my_cache).
 
+-import(calendar,[datetime_to_gregorian_seconds/1,
+                  gregorian_seconds_to_datetime/1,
+                  universal_time/0]). 
+
 %% API exports
 -export([create/0,
          insert/3, 
@@ -19,19 +23,16 @@
 %% API functions
 %%====================================================================
 
-create() -> 
-    TableInfo = ets:info(my_cache),
-    if 
-        TableInfo == undefined ->
-            ets:new(my_cache, [public,named_table]);
-        true -> ok
+create() ->
+    try 
+        ets:new(my_cache, [public,named_table]) 
+    catch 
+        error:badarg -> ok
     end,
     ok.
 
-insert(Key, Value, TimeOut) ->
-    NowInSeconds = calendar:datetime_to_gregorian_seconds(calendar:universal_time()) + TimeOut,
-    Item = #my_cache_item{value = Value, expired_at = calendar:gregorian_seconds_to_datetime(NowInSeconds)},
-    ets:insert(my_cache, {Key, Item}),
+insert(Key, Val, TimeOut) ->
+    ets:insert(my_cache, {Key, #my_cache_item{value = Val, expired_at = addSecondsToDate(universal_time(), TimeOut)}}),
     ok.
 
 lookup(Key) ->
@@ -41,7 +42,7 @@ lookup(Key) ->
             {ok, []};
         true ->     
             [{_, Item}] = CurrentItem,
-            CurrentDate = calendar:universal_time(),
+            CurrentDate = universal_time(),
             if 
                 Item#my_cache_item.expired_at >= CurrentDate  -> 
                     {ok, Item};
@@ -52,37 +53,35 @@ lookup(Key) ->
 
     
 delete_obsolete() -> 
-    CurrentTime = calendar:universal_time(),
+    CurrentDate = universal_time(),
     Expr = ets:fun2ms(
-                      fun({Key, Item}) when Item#my_cache_item.expired_at < CurrentTime -> {Key, Item} end
+                      fun({Key, Item}) when Item#my_cache_item.expired_at < CurrentDate -> {Key, Item} end
                      ),
     ets:match_delete(my_cache, Expr),
     ok.
-
-%%Item#my_cache_item.expired_at
 
 %%====================================================================
 %% Internal functions
 %%====================================================================
 
-addSeconds(Date, TimeOut) -> calendar:gregorian_seconds_to_datetime(calendar:datetime_to_gregorian_seconds(Date) + TimeOut).
+addSecondsToDate(Date, TimeOut) -> gregorian_seconds_to_datetime(datetime_to_gregorian_seconds(Date) + TimeOut).
 
 %%====================================================================
 %% Unit tests
 %%====================================================================
 
 -ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
+-include_lib("eunit/include/eunit.hrl").   
+
     my_cache_test_()->[?_assert(create() =:= ok),
                     ?_assert(ets:info(my_cache) /= undefined),
                     ?_assert(insert(key1,1,600) =:= ok),                    
-                    ?_assert(lookup(key1) =:= {ok, #my_cache_item{value = 1, expired_at = addSeconds(calendar:universal_time(),600)}}),
+                    ?_assert(lookup(key1) =:= {ok, #my_cache_item{value = 1, expired_at = addSecondsToDate(universal_time(),600)}}),
                     ?_assert(lookup(key2) =:= {ok, []}),
                     ?_assert(delete_obsolete() =:= ok)
                    ].
-    my_cache_test_integrated_()->
-        
-        CurrentTime = calendar:universal_time(),
+
+    my_cache_integrated_test_()->        
         create(),
         insert(key1, 1, 0),
         insert(key2, 2, 0),
@@ -91,8 +90,8 @@ addSeconds(Date, TimeOut) -> calendar:gregorian_seconds_to_datetime(calendar:dat
         delete_obsolete(),
         ?_assert(lookup(key1) =:= undefined),
         ?_assert(lookup(key2) =:= undefined),
-        ?_assert(lookup(key3) =:= {ok, #my_cache_item{value = 3, expired_at = addSeconds(calendar:universal_time(),60)}}),
-        ?_assert(lookup(key4) =:= {ok, #my_cache_item{value = 4, expired_at = addSeconds(calendar:universal_time(),60)}}).        
+        ?_assert(lookup(key3) =:= {ok, #my_cache_item{value = 3, expired_at = addSecondsToDate(universal_time(),60)}}),
+        ?_assert(lookup(key4) =:= {ok, #my_cache_item{value = 4, expired_at = addSecondsToDate(universal_time(),60)}}).        
 -endif.
 
 %% http://erlang.org/pipermail/erlang-questions/2015-August/085570.html
