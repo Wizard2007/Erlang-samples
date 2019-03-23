@@ -22,6 +22,7 @@ call(Pid,Msg) ->
     Pid ! {Msg, self(), Ref},
     receive 
         {replay, Ref, Replay} -> Replay
+    after 5000 -> no_reply
     end.
 
 stop(Pid) ->
