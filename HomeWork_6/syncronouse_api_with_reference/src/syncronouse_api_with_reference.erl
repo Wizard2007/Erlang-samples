@@ -11,25 +11,17 @@ start() ->
     InitialState = [],
     spawn(?MODULE, loop, [InitialState]).
 
-add_item(Pid, Item) ->
+add_item(Pid, Item) -> call(Pid,{add, Item}).
+
+remove_item(Pid, Item) -> call(Pid,{remove, Item}).
+
+show_items(Pid) -> call(Pid, show_items).
+
+call(Pid,Msg) ->
     Ref = make_ref(),
-    Pid ! {add, self(), Ref, Item},
+    Pid ! {Msg, self(), Ref},
     receive 
         {replay, Ref, Replay} -> Replay
-    end.
-
-remove_item(Pid, Item) ->
-    Ref = make_ref(),
-    Pid ! {remove, self(), Ref, Item},
-    receive 
-        {replay, Ref, Replay} -> Replay
-    end.
-
-show_items(Pid) ->
-    Ref = make_ref(),
-    Pid ! {show_items, self(), Ref},
-    receive
-        {replay,Ref, Replay} -> Replay
     end.
 
 stop(Pid) ->
@@ -38,10 +30,10 @@ stop(Pid) ->
 
 loop(State) ->
     receive 
-        {add, From, Ref, Item} -> NewState = [Item|State],
+        {{add, Item}, From, Ref} -> NewState = [Item|State],
                              From ! {replay, Ref, ok},
                              ?MODULE:loop(NewState);
-        {remove, From, Ref, Item} -> {Replay, NewState} = case lists:member(Item, State) of
+        {{remove, Item}, From, Ref} -> {Replay, NewState} = case lists:member(Item, State) of
                                                          true -> {ok, lists:delete(Item, State)};
                                                          false -> {{error, not_exists}, State}
                                                      end,
