@@ -18,11 +18,17 @@ remove_item(Pid, Item) -> call(Pid,{remove, Item}).
 show_items(Pid) -> call(Pid, show_items).
 
 call(Pid,Msg) ->
-    Ref = make_ref(),
+    MRef = erlang:monitor(process, Pid),
     Pid ! {Msg, self(), Ref},
     receive 
-        {replay, Ref, Replay} -> Replay
-    after 5000 -> no_reply
+        {replay, MRef, Replay} -> 
+            erlang:demonitor(MRef, [flush]), 
+            Replay;
+        {'DOWN', MRef, _, _, Reason} ->
+            {error, Reason}        
+    after 5000 -> 
+        erlang:demonitor(MRef, [flush]), 
+        no_reply
     end.
 
 stop(Pid) ->
