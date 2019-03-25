@@ -17,7 +17,7 @@
 
 
 %% API exports
--export([start_link/0,init/1,my_api_1/1,handle_call/3,handle_info/2]).
+-export([start_link/0,init/1,my_api_1/1,handle_call/3,handle_info/2, create/0, handle_create/3]).
 
 %%====================================================================
 %% API functions
@@ -39,7 +39,20 @@ handle_info(trigger, State) ->
    {noreply, State}.
 
 handle_call({msg1, A}, _From, State) -> erlang:display("test"),
-    {reply, State, [A, _From]}.
+    {reply, State, [A, _From]};
+handle_call({create}, _From, State) -> erlang:display("create2 "),{reply, State, [ _From]}.
+
+create() -> erlang:display("create0"), gen_server:call(?MODULE, {create}).
+
+handle_create({create}, _From, State) ->
+    erlang:display("create1"),
+    try 
+        ets:new(my_cache, [public,named_table]) 
+    catch 
+        error:badarg -> {reply, State, [ok]}
+    end,
+    erlang:display("create1 replay"),
+    {reply, State, [ok]}.
 
 %%====================================================================
 %% Internal functions
