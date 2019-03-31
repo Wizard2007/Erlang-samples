@@ -10,36 +10,38 @@
 %% задается в секундах.
 
 -module(cache_server).
+
+-define(DBG(Str, Args), io:format(Str, Args)).
+
 -behaviour(gen_server).
+-import(calendar,[datetime_to_gregorian_seconds/1, gregorian_seconds_to_datetime/1, universal_time/0]). 
+
+-include_lib("eunit/include/eunit.hrl").
+
 
 -record(state, {drop_interval}).
-
+-record(my_cache_item,{value, expired_at}).
 
 %% API exports
--export([start_link/0,init/1,my_api_1/1,handle_call/3,handle_info/2, create/0, handle_create/3]).
+-export([start_link/1,init/1,create/0,handle_info/2,lookup_by_date/2]).
 
 %%====================================================================
 %% API functions
 %%====================================================================
 
-start_link() -> gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+start_link([{drop_interval, Seconds}]) -> gen_server:start_link({local, ?MODULE}, ?MODULE, [{drop_interval, Seconds}], []).
 
-init([]) ->
-    erlang:send_after(?INTERVAL, self(), trigger),
-    {ok, #state{drop_interval = 5000}}.
+init([{drop_interval, Seconds}]) ->
+    erlang:display(Seconds),
+    erlang:send_after(Seconds, self(), trigger),
+    {ok, #state{drop_interval = Seconds}}.
 
-my_api_1(A) ->
-    erlang:display("my_api_1~n"),
-    gen_server:call(?MODULE, {msg1, A}).
 
 handle_info(trigger, State) ->
+   % erlang:display("Delete"),
    delete_obsolete(),
    erlang:send_after(State#state.drop_interval, self(), trigger),
    {noreply, State}.
-
-handle_call({msg1, A}, _From, State) -> erlang:display("test"),
-    {reply, State, [A, _From]};
-handle_call({create}, _From, State) -> erlang:display("create2 "),{reply, State, [ _From]}.
 
 create() ->
     try 
@@ -59,13 +61,34 @@ lookup(Key) ->
         [{_,Val}] when Val#my_cache_item.expired_at >= CurrentDate -> {ok, Val};
         _ -> undefined
     end.
-    
+
+lookup_by_date(DateFrom, DateTo) ->    
+    ?debugFmt(" ~p ~p", [DateFrom,DateTo]),
+    try
+        ?debugFmt(" try", []),
+        ?debugFmt(" select ~p ", [    ets:select(my_cache, 
+            ets:fun2ms(
+                fun({Value, Expired_at}) -> {Value, Expired_at} end)
+            )]),
+    ets:match(my_cache, 
+            ets:fun2ms(
+                fun({{Value, Expired_at}}) -> {{Value, Expired_at}} end)
+            )
+        
+    catch
+        _:_ -> undefuned
+    end.
+
 delete_obsolete() -> 
     CurrentDate = universal_time(),
-    ets:match_delete(my_cache, 
-        ets:fun2ms(
-            fun({Key, Item}) when Item#my_cache_item.expired_at < CurrentDate -> {Key, Item} end)
-        ),
+    try
+        ets:match_delete(my_cache, 
+            ets:fun2ms(
+                fun({Key, Item}) when Item#my_cache_item.expired_at < CurrentDate -> {Key, Item} end)
+            )
+    catch
+        _:_ -> ok
+    end,
     ok.
 
 %%====================================================================
@@ -79,7 +102,7 @@ add_seconds_to_date(Date, TimeOut) -> gregorian_seconds_to_datetime(datetime_to_
 %%====================================================================
 
 -ifdef(TEST).
--include_lib("eunit/include/eunit.hrl").
+
     my_cache_test_()->[?_assert(create() =:= ok),
                     ?_assert(ets:info(my_cache) /= undefined),
                     ?_assert(insert(key1,1,600) =:= ok),                    
@@ -88,7 +111,7 @@ add_seconds_to_date(Date, TimeOut) -> gregorian_seconds_to_datetime(datetime_to_
                     ?_assert(delete_obsolete() =:= ok)
                    ].
 
-    my_cache_integrated_test_()->        
+    my_cache_lookup_test_()->        
         create(),
         insert(key1, 1, 0),
         insert(key2, 2, 0),
@@ -98,5 +121,13 @@ add_seconds_to_date(Date, TimeOut) -> gregorian_seconds_to_datetime(datetime_to_
         ?_assert(lookup(key1) =:= undefined),
         ?_assert(lookup(key2) =:= undefined),
         ?_assert(lookup(key3) =:= {ok, #my_cache_item{value = 3, expired_at = add_seconds_to_date(universal_time(),60)}}),
-        ?_assert(lookup(key4) =:= {ok, #my_cache_item{value = 4, expired_at = add_seconds_to_date(universal_time(),60)}}).        
+        ?_assert(lookup(key4) =:= {ok, #my_cache_item{value = 4, expired_at = add_seconds_to_date(universal_time(),60)}}).
+
+    my_cache_lookup_by_date_test_()-> 
+        create(),
+        insert(key1, 1, 0),
+        insert(key2, 2, 0),
+        insert(key3, 3, 60),
+        insert(key4, 4, 60),        
+         ?_assert(lookup_by_date(0, 0) =:= []). 
 -endif.
